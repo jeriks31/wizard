@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Wizard.Api/Wizard.Api.csproj" />
+    <Project Path="src/Wizard.Game/Wizard.Game.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Wizard.Api.IntegrationTests/Wizard.Api.IntegrationTests.csproj" />
+    <Project Path="tests/Wizard.Game.Tests/Wizard.Game.Tests.csproj" />
+  </Folder>
+</Solution>

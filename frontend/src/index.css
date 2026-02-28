@@ -1,0 +1,208 @@
+:root {
+  color: #131313;
+  background: radial-gradient(circle at top right, #f0ead6, #f7f4ea 60%);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  line-height: 1.45;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+
+a {
+  color: #1f5f2d;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+button {
+  border: 1px solid #386641;
+  background: #386641;
+  color: #fff;
+  border-radius: 8px;
+  padding: 0.45rem 0.8rem;
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+input {
+  border: 1px solid #9f9f9f;
+  border-radius: 8px;
+  padding: 0.45rem 0.6rem;
+}
+
+.layout {
+  width: 100%;
+  min-height: 100vh;
+  padding: 1rem;
+  display: flex;
+  justify-content: center;
+}
+
+.panel {
+  width: min(980px, 100%);
+  border: 1px solid #d4ccb6;
+  border-radius: 14px;
+  background: #fffdf6;
+  padding: 1rem;
+  display: grid;
+  gap: 1rem;
+}
+
+.stack {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.wrap {
+  flex-wrap: wrap;
+}
+
+.row-between {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.card {
+  border: 1px solid #ddd3bb;
+  border-radius: 10px;
+  padding: 0.65rem;
+  background: #fff;
+}
+
+.list {
+  list-style: none;
+  display: grid;
+  gap: 0.5rem;
+  padding: 0;
+  margin: 0;
+}
+
+.error {
+  color: #b00020;
+}
+
+.current-turn {
+  border-color: #79a47f;
+  background: #f3fbf4;
+}
+
+.card-button {
+  border: none;
+  background: transparent;
+  padding: 0;
+}
+
+.card-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+}
+
+.playing-card {
+  width: 74px;
+  height: 106px;
+  border: 1px solid #2e2e2e;
+  border-radius: 8px;
+  background: #fff;
+  color: #1a1a1a;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+  user-select: none;
+}
+
+.playing-card.small {
+  width: 52px;
+  height: 74px;
+}
+
+.playing-card.clubs {
+  color: #2e7d32;
+}
+
+.playing-card.diamonds {
+  color: #c69200;
+}
+
+.playing-card.hearts {
+  color: #b61c1c;
+}
+
+.playing-card.spades {
+  color: #1565c0;
+}
+
+.trick-plays {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  gap: 0.2rem;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.trick-play {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  min-width: 56px;
+}
+
+.trick-play-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.playing-card-corner {
+  display: flex;
+  flex-direction: column;
+  line-height: 1;
+  font-weight: 700;
+  font-size: 0.95rem;
+  padding: 0.35rem;
+}
+
+.playing-card.small .playing-card-corner {
+  font-size: 0.72rem;
+  padding: 0.2rem;
+}
+
+.top-left {
+  align-items: flex-start;
+}
+
+.bottom-right {
+  align-self: flex-end;
+  align-items: flex-end;
+  transform: rotate(180deg);
+}
