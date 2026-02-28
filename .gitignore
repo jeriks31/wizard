@@ -1,3 +1,35 @@
-**/obj/
+## .NET build outputs
 **/bin/
+**/obj/
+**/TestResults/
+
+## Visual Studio / Rider / ReSharper
+**/.vs/
 **/.idea/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.DotSettings.user
+_ReSharper*/
+*.ReSharper
+
+## Node / frontend
+**/node_modules/
+**/dist/
+**/.vite/
+**/coverage/
+*.tsbuildinfo
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+## Environment and local config
+.env
+.env.*
+!.env.example
+
+## OS files
+.DS_Store
+Thumbs.db
