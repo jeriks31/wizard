@@ -21,7 +21,7 @@ public sealed class LobbyService : ILobbyService
     {
         ValidatePlayerName(playerName);
 
-        while (true)
+        while (true) // Loop in case of lobbyCode collision
         {
             var lobbyCode = GenerateLobbyCode();
             var host = new PlayerState
@@ -309,15 +309,15 @@ public sealed class LobbyService : ILobbyService
 
     private static string GenerateLobbyCode()
     {
-        const string chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-        Span<char> buffer = stackalloc char[6];
-        var random = Random.Shared;
-        for (var i = 0; i < buffer.Length; i++)
+        const string chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // Non-similar looking chars
+        return string.Create(6, chars, static (span, chars) =>
         {
-            buffer[i] = chars[random.Next(chars.Length)];
-        }
-
-        return new string(buffer);
+            var random = Random.Shared;
+            for (var i = 0; i < span.Length; i++)
+            {
+                span[i] = chars[random.Next(chars.Length)];
+            }
+        });
     }
 
     private ConnectionSession GetSession(string connectionId)

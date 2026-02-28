@@ -14,8 +14,7 @@ internal static class StateProjector
                 var hand = state.Round?.HandsByPlayer.GetValueOrDefault(player.PlayerId);
                 var isYou = player.PlayerId == recipientPlayerId;
                 var canAct =
-                    state.Status == LobbyStatus.Playing &&
-                    state.Round is not null &&
+                    state is { Status: LobbyStatus.Playing, Round: not null } &&
                     state.Round.CurrentTurnPlayerId == recipientPlayerId;
                 return new PlayerView(
                     player.PlayerId,
