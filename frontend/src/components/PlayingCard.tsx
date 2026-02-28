@@ -17,7 +17,7 @@ const suitSymbol: Record<CardView['suit'], string> = {
 export function PlayingCard({ card, size = 'normal' }: PlayingCardProps) {
   const rank = card.kind === 'Standard' ? String(card.value ?? '?') : card.kind === 'Wizard' ? 'W' : 'J'
   const symbol = suitSymbol[card.suit]
-  const suitClass = card.suit.toLowerCase()
+  const suitClass = card.kind === 'Standard' ? card.suit.toLowerCase() : ''
 
   return (
     <div className={`playing-card ${size === 'small' ? 'small' : ''} ${suitClass}`}>

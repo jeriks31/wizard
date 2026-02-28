@@ -240,12 +240,12 @@ input {
   flex-direction: column;
   line-height: 1;
   font-weight: 700;
-  font-size: 0.95rem;
+  font-size: 1.25rem;
   padding: 0.35rem;
 }
 
 .playing-card.small .playing-card-corner {
-  font-size: 0.72rem;
+  font-size: 0.9rem;
   padding: 0.2rem;
 }
 
