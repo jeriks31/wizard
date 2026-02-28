@@ -28,9 +28,7 @@ jobs:
             context: ./frontend
             dockerfile: ./frontend/Dockerfile
             image: wizard-frontend
-            build_args: |
-              VITE_API_BASE_URL=${{ vars.VITE_API_BASE_URL || 'http://localhost:5000' }}
-              VITE_HUB_URL=${{ vars.VITE_HUB_URL || 'http://localhost:5000/hubs/game' }}
+            build_args: ""
 
     steps:
       - name: Checkout

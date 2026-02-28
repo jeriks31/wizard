@@ -5,13 +5,12 @@ COPY package*.json ./
 RUN npm ci
 
 COPY . .
-ARG VITE_API_BASE_URL=http://localhost:5000
-ARG VITE_HUB_URL=http://localhost:5000/hubs/game
-ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
-ENV VITE_HUB_URL=${VITE_HUB_URL}
 RUN npm run build
 
 FROM nginx:1.29-alpine AS final
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /app/dist /usr/share/nginx/html
+COPY docker-entrypoint.d/40-runtime-config.sh /docker-entrypoint.d/40-runtime-config.sh
+RUN chmod +x /docker-entrypoint.d/40-runtime-config.sh
+ENV WIZARD_BACKEND_URL=http://localhost:4646
 EXPOSE 80
