@@ -4,17 +4,18 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     ports:
-      - "4646:8080"
+      - "5000:8080"
     restart: unless-stopped
 
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    environment:
-      WIZARD_BACKEND_URL: ${WIZARD_BACKEND_URL:-http://localhost:4646}
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:5000}
+        VITE_HUB_URL: ${VITE_HUB_URL:-http://localhost:5000/hubs/game}
     ports:
-      - "4545:80"
+      - "3000:80"
     depends_on:
       - backend
     restart: unless-stopped

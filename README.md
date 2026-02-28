@@ -45,14 +45,7 @@ Build and run:
 docker compose up --build
 ```
 
-Configure frontend runtime API endpoints (optional):
-
-```powershell
-$env:WIZARD_BACKEND_URL="http://localhost:4646"
-docker compose up --build
-```
-
 Services:
 
-- Frontend: `http://localhost:4545`
-- Backend: `http://localhost:4646`
+- Frontend: `http://localhost:3000`
+- Backend: `http://localhost:5000`

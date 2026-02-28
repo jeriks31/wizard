@@ -15,7 +15,6 @@ import {
   type ReactNode,
 } from 'react'
 import type { SessionState, StateUpdatedEnvelope, Suit } from './types'
-import { hubUrl } from './config'
 
 const SESSION_KEY = 'wizard_session_v1'
 
@@ -33,6 +32,8 @@ interface WizardClientContextValue {
 }
 
 const WizardClientContext = createContext<WizardClientContextValue | null>(null)
+
+const hubUrl = import.meta.env.VITE_HUB_URL?.trim() || '/hubs/game'
 
 export function WizardClientProvider({ children }: { children: ReactNode }) {
   const [session, setSessionInternal] = useState<SessionState | null>(() => {
