@@ -37,7 +37,7 @@ dotnet run --project backend/src/Wizard.Api
 cd frontend && npm install && npm run dev
 ```
 
-## Docker / Unraid
+## Docker
 
 Build and run:
 
@@ -49,9 +49,3 @@ Services:
 
 - Frontend: `http://localhost:3000`
 - Backend: `http://localhost:5000`
-
-For Unraid:
-
-- deploy via Docker Compose plugin
-- set `VITE_API_BASE_URL` and `VITE_HUB_URL` to your reachable host/domain
-- if using reverse proxy, enable WebSocket upgrade for `/hubs/game`
