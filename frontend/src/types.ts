@@ -1,4 +1,4 @@
-export type LobbyStatus = 'Lobby' | 'ChoosingTrump' | 'Bidding' | 'Playing' | 'Completed'
+export type LobbyStatus = 'Lobby' | 'ChoosingTrump' | 'Bidding' | 'Playing' | 'ResolvingTrick' | 'Completed'
 
 export type CardKind = 'Standard' | 'Wizard' | 'Jester'
 export type Suit = 'Clubs' | 'Diamonds' | 'Hearts' | 'Spades'
@@ -60,6 +60,7 @@ export interface RoundView {
   requiresDealerTrumpSelection: boolean
   currentTrickNumber: number
   currentTrickLeaderPlayerId: string
+  currentTrickWinnerPlayerId: string | null
   currentTrickPlays: TrickPlayView[]
 }
 

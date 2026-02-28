@@ -24,6 +24,7 @@ builder.Services.AddSignalR().AddJsonProtocol(options =>
 {
     options.PayloadSerializerOptions.Converters.Add(new JsonStringEnumConverter());
 });
+builder.Services.Configure<GameFlowOptions>(builder.Configuration.GetSection(GameFlowOptions.SectionName));
 builder.Services.AddSingleton<ILobbyService, LobbyService>();
 
 var app = builder.Build();

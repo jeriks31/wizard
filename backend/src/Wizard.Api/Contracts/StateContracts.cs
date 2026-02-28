@@ -32,6 +32,7 @@ public sealed record RoundView(
     bool RequiresDealerTrumpSelection,
     int CurrentTrickNumber,
     string CurrentTrickLeaderPlayerId,
+    string? CurrentTrickWinnerPlayerId,
     IReadOnlyList<TrickPlayView> CurrentTrickPlays);
 
 public sealed record TrickPlayView(string PlayerId, int SeatIndex, CardView Card);

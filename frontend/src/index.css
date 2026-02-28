@@ -114,6 +114,11 @@ input {
   background: #f3fbf4;
 }
 
+.trick-winner-row {
+  border-color: #2a6f97;
+  background: #ebf6ff;
+}
+
 .card-button {
   border: none;
   background: transparent;
@@ -176,6 +181,8 @@ input {
   align-items: center;
   gap: 0.2rem;
   min-width: 56px;
+  border-radius: 8px;
+  padding: 0.2rem;
 }
 
 .trick-play-name {

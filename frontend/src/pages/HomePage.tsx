@@ -72,7 +72,7 @@ export function HomePage() {
             value={playerName}
             onChange={e => setPlayerName(e.target.value)}
             maxLength={32}
-            placeholder="Jan"
+            placeholder="John Doe"
           />
           <button type="submit" disabled={loading}>
             Create Lobby

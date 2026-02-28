@@ -188,10 +188,15 @@ export function GamePage() {
             {state.players.map(player => (
               <li
                 key={player.playerId}
-                className={`row-between card ${activePlayer?.playerId === player.playerId ? 'current-turn' : ''}`}
+                className={`row-between card ${
+                  activePlayerTag && activePlayer?.playerId === player.playerId ? 'current-turn' : ''
+                } ${state.status === 'ResolvingTrick' && round?.currentTrickWinnerPlayerId === player.playerId ? 'trick-winner-row' : ''}`}
               >
                 <span>
-                  {player.isYou ? 'You' : player.name}
+                   {player.name}{player.isYou ? ' (You)' : ''}
+                  {state.status === 'ResolvingTrick' && round?.currentTrickWinnerPlayerId === player.playerId
+                    ? ' (Wins the trick)'
+                    : ''}
                   {activePlayer?.playerId === player.playerId && activePlayerTag ? ` (${activePlayerTag})` : ''}
                 </span>
                 <span>

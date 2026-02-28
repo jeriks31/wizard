@@ -1,5 +1,7 @@
 using System.Collections.Concurrent;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Wizard.Api.Contracts;
 using Wizard.Api.Hubs;
 using Wizard.Game;
@@ -11,10 +13,17 @@ public sealed class LobbyService : ILobbyService
     private readonly ConcurrentDictionary<string, LobbyActor> _lobbies = new(StringComparer.OrdinalIgnoreCase);
     private readonly ConcurrentDictionary<string, ConnectionSession> _sessionsByConnection = new();
     private readonly IHubContext<GameHub> _hubContext;
+    private readonly ILogger<LobbyService> _logger;
+    private readonly int _trickRevealDelayMs;
 
-    public LobbyService(IHubContext<GameHub> hubContext)
+    public LobbyService(
+        IHubContext<GameHub> hubContext,
+        IOptions<GameFlowOptions> gameFlowOptions,
+        ILogger<LobbyService> logger)
     {
         _hubContext = hubContext;
+        _logger = logger;
+        _trickRevealDelayMs = Math.Max(0, gameFlowOptions.Value.TrickRevealDelayMs);
     }
 
     public async Task<JoinLobbyResponse> CreateLobbyAsync(string playerName)
@@ -173,7 +182,8 @@ public sealed class LobbyService : ILobbyService
     {
         var session = GetSession(connectionId);
         var actor = GetLobbyOrThrow(session.LobbyCode);
-        string reason = "CardPlayed";
+        var shouldAutoAdvance = false;
+        var reason = "CardPlayed";
 
         await actor.RunAsync(state =>
         {
@@ -188,26 +198,29 @@ public sealed class LobbyService : ILobbyService
                 throw new InvalidOperationException("Trick number mismatch.");
             }
 
-            var oldRound = state.Round.RoundNumber;
-            var oldCompleted = state.Round.CompletedTricks;
-
             var engine = new WizardGameEngine(Random.Shared);
             engine.PlayCard(state, session.PlayerId, cardId);
             state.Revision++;
 
-            if (state.Status == LobbyStatus.Completed)
+            if (state.Status == LobbyStatus.ResolvingTrick)
+            {
+                reason = "TrickCompleted";
+                shouldAutoAdvance = true;
+            }
+            else if (state.Status == LobbyStatus.Completed)
             {
                 reason = "GameEnded";
-            }
-            else if (state.Round?.RoundNumber != oldRound || state.Round?.CompletedTricks != oldCompleted)
-            {
-                reason = "RoundAdvanced";
             }
 
             return true;
         });
 
         await BroadcastStateAsync(actor, reason);
+
+        if (shouldAutoAdvance)
+        {
+            _ = AutoAdvanceAfterTrickCompletionAsync(actor);
+        }
     }
 
     public async Task SendCurrentStateToCallerAsync(string connectionId)
@@ -270,6 +283,48 @@ public sealed class LobbyService : ILobbyService
         foreach (var payload in payloads)
         {
             await _hubContext.Clients.Client(payload.ConnectionId).SendAsync("StateUpdated", payload.Envelope);
+        }
+    }
+
+    private async Task AutoAdvanceAfterTrickCompletionAsync(LobbyActor actor)
+    {
+        try
+        {
+            if (_trickRevealDelayMs > 0)
+            {
+                await Task.Delay(_trickRevealDelayMs);
+            }
+
+            var trickAdvance = await actor.RunAsync(state =>
+            {
+                if (state.Status != LobbyStatus.ResolvingTrick)
+                {
+                    return (DidAdvance: false, NewStatus: state.Status);
+                }
+
+                var engine = new WizardGameEngine(Random.Shared);
+                engine.AdvanceAfterTrickResolution(state);
+                state.Revision++;
+                return (DidAdvance: true, NewStatus: state.Status);
+            });
+
+            if (!trickAdvance.DidAdvance)
+            {
+                return;
+            }
+
+            var trickReason = trickAdvance.NewStatus switch
+            {
+                LobbyStatus.Playing => "TrickAdvanced",
+                LobbyStatus.Bidding or LobbyStatus.ChoosingTrump => "RoundAdvanced",
+                LobbyStatus.Completed => "GameEnded",
+                _ => "TrickAdvanced"
+            };
+            await BroadcastStateAsync(actor, trickReason);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to auto-advance flow after trick completion.");
         }
     }
 

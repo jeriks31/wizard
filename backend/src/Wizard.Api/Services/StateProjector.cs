@@ -70,6 +70,7 @@ internal static class StateProjector
                 state.Round.RequiresDealerTrumpSelection,
                 state.Round.CurrentTrick.TrickNumber,
                 state.Round.CurrentTrick.LeaderPlayerId,
+                state.Round.CurrentTrickWinnerPlayerId,
                 state.Round.CurrentTrick.Plays
                     .Select(play => new TrickPlayView(play.PlayerId, play.SeatIndex, ToCardView(play.Card)))
                     .ToArray());

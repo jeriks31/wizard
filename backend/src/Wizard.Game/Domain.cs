@@ -8,7 +8,8 @@ public enum LobbyStatus
     ChoosingTrump = 1,
     Bidding = 2,
     Playing = 3,
-    Completed = 4
+    ResolvingTrick = 4,
+    Completed = 5
 }
 
 public enum CardKind
@@ -66,6 +67,7 @@ public sealed class RoundState
     public bool RequiresDealerTrumpSelection { get; set; }
     public required string CurrentTurnPlayerId { get; set; }
     public required TrickState CurrentTrick { get; set; }
+    public string? CurrentTrickWinnerPlayerId { get; set; }
     public int CompletedTricks { get; set; }
     public Dictionary<string, List<Card>> HandsByPlayer { get; } = [];
     public Dictionary<string, int?> BidsByPlayer { get; } = [];
@@ -396,6 +398,25 @@ public sealed class WizardGameEngine
         state.Round.TricksWonByPlayer[winnerPlayerId]++;
         state.Players.Single(p => p.PlayerId == winnerPlayerId).TricksWonThisRound++;
         state.Round.CompletedTricks++;
+        state.Round.CurrentTrickWinnerPlayerId = winnerPlayerId;
+        state.Round.CurrentTurnPlayerId = winnerPlayerId;
+        state.Status = LobbyStatus.ResolvingTrick;
+    }
+
+    public void AdvanceAfterTrickResolution(LobbyState state)
+    {
+        if (state.Round is null)
+        {
+            throw new InvalidOperationException("No active round.");
+        }
+
+        if (state.Status != LobbyStatus.ResolvingTrick)
+        {
+            throw new InvalidOperationException("Trick resolution is not active.");
+        }
+
+        var winnerPlayerId = state.Round.CurrentTrickWinnerPlayerId
+            ?? throw new InvalidOperationException("Trick winner is missing.");
 
         if (state.Round.CompletedTricks >= state.Round.RoundNumber)
         {
@@ -417,6 +438,8 @@ public sealed class WizardGameEngine
             LeaderPlayerId = winnerPlayerId
         };
         state.Round.CurrentTurnPlayerId = winnerPlayerId;
+        state.Round.CurrentTrickWinnerPlayerId = null;
+        state.Status = LobbyStatus.Playing;
     }
 
     private void ScoreCurrentRound(LobbyState state)
