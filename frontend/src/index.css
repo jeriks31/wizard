@@ -183,6 +183,58 @@ input {
   font-weight: 600;
 }
 
+.trick-play-placeholder {
+  width: 52px;
+  height: 74px;
+  border: 1px dashed #cfc5ac;
+  border-radius: 8px;
+  background: #faf7ef;
+}
+
+.history-card {
+  padding: 0.45rem;
+}
+
+.history-table-wrap {
+  overflow-x: auto;
+}
+
+.history-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 380px;
+}
+
+.history-table th,
+.history-table td {
+  border: 1px solid #ddd3bb;
+  padding: 0.25rem 0.35rem;
+  vertical-align: top;
+  text-align: left;
+}
+
+.history-table thead th {
+  background: #f7f4ea;
+  font-weight: 700;
+}
+
+.history-cell {
+  display: grid;
+  gap: 0.05rem;
+}
+
+.history-cell-win {
+  background: #ecf8ef;
+}
+
+.history-cell-loss {
+  background: #fdeeee;
+}
+
+.history-cell-pending {
+  background: #fff;
+}
+
 .playing-card-corner {
   display: flex;
   flex-direction: column;

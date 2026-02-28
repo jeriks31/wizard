@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { PlayingCard } from '../components/PlayingCard'
 import { useWizardClient } from '../WizardClientContext'
@@ -34,7 +34,44 @@ export function GamePage() {
 
   const state = envelope.state
   const me = state.players.find(p => p.isYou)
+  const playersBySeat = [...state.players].sort((a, b) => a.seatIndex - b.seatIndex)
+  const historyRows = useMemo(() => {
+    const previousScoresByPlayer = new Map<string, number>()
+
+    return state.roundHistory.map(row => ({
+      ...row,
+      cells: row.cells.map(cell => {
+        if (cell.score === null) {
+          return { ...cell, outcome: 'pending' as const }
+        }
+
+        const previousScore = previousScoresByPlayer.get(cell.playerId) ?? 0
+        const delta = cell.score - previousScore
+        previousScoresByPlayer.set(cell.playerId, cell.score)
+
+        return {
+          ...cell,
+          outcome: delta > 0 ? ('win' as const) : delta < 0 ? ('loss' as const) : ('pending' as const),
+        }
+      }),
+    }))
+  }, [state.roundHistory])
   const round = state.round
+  const trickOrderPlayers = round
+    ? (() => {
+        const leaderIndex = playersBySeat.findIndex(player => player.playerId === round.currentTrickLeaderPlayerId)
+        if (leaderIndex < 0) {
+          return playersBySeat
+        }
+        return playersBySeat.map((_, offset) => playersBySeat[(leaderIndex + offset) % playersBySeat.length])
+      })()
+    : []
+  const trickSlots = round
+    ? trickOrderPlayers.map(player => ({
+        player,
+        play: round.currentTrickPlays.find(play => play.playerId === player.playerId) ?? null,
+      }))
+    : []
   const isMyTurn = state.currentTurnPlayerId === state.youPlayerId
   const dealer = round ? state.players.find(p => p.seatIndex === round.dealerSeatIndex) : null
   const shouldChooseTrump =
@@ -90,12 +127,16 @@ export function GamePage() {
             </p>
             <h3>Current trick</h3>
             <ul className="trick-plays">
-              {round.currentTrickPlays.map(play => (
-                <li key={`${play.playerId}-${play.card.id}`} className="trick-play">
+              {trickSlots.map(({ player, play }) => (
+                <li key={player.playerId} className="trick-play">
                   <span className="trick-play-name">
-                    {state.players.find(player => player.playerId === play.playerId)?.name ?? play.playerId}
+                    {player.name}
                   </span>
-                  <PlayingCard card={play.card} size="small" />
+                  {play ? (
+                    <PlayingCard card={play.card} size="small" />
+                  ) : (
+                    <div className="trick-play-placeholder" aria-hidden="true" />
+                  )}
                 </li>
               ))}
             </ul>
@@ -150,13 +191,11 @@ export function GamePage() {
                 className={`row-between card ${activePlayer?.playerId === player.playerId ? 'current-turn' : ''}`}
               >
                 <span>
-                  {player.name}
-                  {player.isYou ? ' (You)' : ''}
+                  {player.isYou ? 'You' : player.name}
                   {activePlayer?.playerId === player.playerId && activePlayerTag ? ` (${activePlayerTag})` : ''}
                 </span>
                 <span>
-                  score {player.score} | bid {player.bid ?? '-'} | tricks {player.tricksWon} | cards{' '}
-                  {player.handCount}
+                  tricks: {player.tricksWon} / {player.bid ?? '-'}
                 </span>
               </li>
             ))}
@@ -184,6 +223,39 @@ export function GamePage() {
                 </button>
               )
             })}
+          </div>
+        </section>
+
+        <section className="card history-card">
+          <h2>Round History</h2>
+          <div className="history-table-wrap">
+            <table className="history-table">
+              <thead>
+                <tr>
+                  <th scope="col" aria-label="Round" />
+                  {playersBySeat.map(player => (
+                    <th key={player.playerId} scope="col">
+                      {player.name}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {historyRows.map(row => (
+                  <tr key={row.roundNumber}>
+                    <th scope="row">{row.roundNumber}</th>
+                    {row.cells.map(cell => (
+                      <td key={`${row.roundNumber}-${cell.playerId}`} className={`history-cell-${cell.outcome}`}>
+                        <div className="history-cell">
+                          <span>B: {cell.bid ?? '-'}</span>
+                          <span>S: {cell.score ?? '-'}</span>
+                        </div>
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </section>
       </section>

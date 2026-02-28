@@ -7,8 +7,11 @@ internal static class StateProjector
 {
     public static StateUpdatedEnvelope BuildEnvelope(LobbyState state, string recipientPlayerId, string reason)
     {
-        var playerViews = state.Players
+        var playersBySeat = state.Players
             .OrderBy(p => p.SeatIndex)
+            .ToArray();
+
+        var playerViews = playersBySeat
             .Select(player =>
             {
                 var hand = state.Round?.HandsByPlayer.GetValueOrDefault(player.PlayerId);
@@ -42,6 +45,19 @@ internal static class StateProjector
             ? ResolveWinners(state.Players)
             : [];
 
+        var roundHistory = state.RoundHistory
+            .OrderBy(x => x.RoundNumber)
+            .Select(row => new RoundHistoryRowView(
+                row.RoundNumber,
+                row.IsCompleted,
+                playersBySeat
+                    .Select(player => new RoundHistoryCellView(
+                        player.PlayerId,
+                        row.BidsByPlayer.GetValueOrDefault(player.PlayerId),
+                        row.TotalScoresByPlayer.GetValueOrDefault(player.PlayerId)))
+                    .ToArray()))
+            .ToArray();
+
         var round = state.Round is null
             ? null
             : new RoundView(
@@ -69,7 +85,8 @@ internal static class StateProjector
             recipientPlayerId,
             state.Status == LobbyStatus.Lobby && state.Players.Any(x => x.PlayerId == recipientPlayerId && x.IsHost) && state.Players.Count is >= 3 and <= 6,
             GetAllowedBids(state, recipientPlayerId),
-            winners);
+            winners,
+            roundHistory);
 
         return new StateUpdatedEnvelope(
             state.Revision,

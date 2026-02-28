@@ -72,6 +72,14 @@ public sealed class RoundState
     public Dictionary<string, int> TricksWonByPlayer { get; } = [];
 }
 
+public sealed class RoundHistoryEntry
+{
+    public required int RoundNumber { get; init; }
+    public Dictionary<string, int?> BidsByPlayer { get; } = [];
+    public Dictionary<string, int?> TotalScoresByPlayer { get; } = [];
+    public bool IsCompleted { get; set; }
+}
+
 public sealed class LobbyState
 {
     public required string LobbyCode { get; init; }
@@ -79,6 +87,7 @@ public sealed class LobbyState
     public int Revision { get; set; }
     public int MaxRounds { get; set; }
     public List<PlayerState> Players { get; } = [];
+    public List<RoundHistoryEntry> RoundHistory { get; } = [];
     public RoundState? Round { get; set; }
 }
 
@@ -272,6 +281,7 @@ public sealed class WizardGameEngine
         }
 
         state.MaxRounds = WizardRules.MaxRounds(state.Players.Count);
+        state.RoundHistory.Clear();
         BeginRound(state, 1);
     }
 
@@ -318,6 +328,9 @@ public sealed class WizardGameEngine
 
         state.Round.BidsByPlayer[requesterPlayerId] = bid;
         state.Players.Single(p => p.PlayerId == requesterPlayerId).CurrentBid = bid;
+        state.RoundHistory
+            .Single(x => x.RoundNumber == state.Round.RoundNumber)
+            .BidsByPlayer[requesterPlayerId] = bid;
 
         var nextBidder = playersInBidOrder.FirstOrDefault(
             p => !state.Round.BidsByPlayer.TryGetValue(p.PlayerId, out var maybeBid) || maybeBid is null);
@@ -413,13 +426,18 @@ public sealed class WizardGameEngine
             return;
         }
 
+        var roundHistory = state.RoundHistory.Single(x => x.RoundNumber == state.Round.RoundNumber);
+
         foreach (var player in state.Players)
         {
             var bid = state.Round.BidsByPlayer[player.PlayerId]
                 ?? throw new InvalidOperationException("Missing bid at score time.");
             var tricksWon = state.Round.TricksWonByPlayer[player.PlayerId];
             player.Score += WizardRules.ScoreRound(bid, tricksWon);
+            roundHistory.TotalScoresByPlayer[player.PlayerId] = player.Score;
         }
+
+        roundHistory.IsCompleted = true;
     }
 
     private void BeginRound(LobbyState state, int roundNumber)
@@ -440,6 +458,11 @@ public sealed class WizardGameEngine
             }
         };
 
+        var historyEntry = new RoundHistoryEntry
+        {
+            RoundNumber = roundNumber
+        };
+
         foreach (var player in state.Players)
         {
             player.CurrentBid = null;
@@ -447,6 +470,8 @@ public sealed class WizardGameEngine
             round.BidsByPlayer[player.PlayerId] = null;
             round.TricksWonByPlayer[player.PlayerId] = 0;
             round.HandsByPlayer[player.PlayerId] = [];
+            historyEntry.BidsByPlayer[player.PlayerId] = null;
+            historyEntry.TotalScoresByPlayer[player.PlayerId] = null;
         }
 
         var deck = DeckFactory.CreateShuffledDeck(_random);
@@ -466,6 +491,7 @@ public sealed class WizardGameEngine
         round.RequiresDealerTrumpSelection = round.UpCard?.Kind == CardKind.Wizard;
 
         state.Round = round;
+        state.RoundHistory.Add(historyEntry);
         state.Status = round.RequiresDealerTrumpSelection ? LobbyStatus.ChoosingTrump : LobbyStatus.Bidding;
     }
 

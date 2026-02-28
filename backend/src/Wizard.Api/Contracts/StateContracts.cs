@@ -19,7 +19,8 @@ public sealed record PlayerScopedState(
     string YouPlayerId,
     bool CanStartGame,
     IReadOnlyList<int> AllowedBids,
-    IReadOnlyList<string> WinnerPlayerIds);
+    IReadOnlyList<string> WinnerPlayerIds,
+    IReadOnlyList<RoundHistoryRowView> RoundHistory);
 
 public sealed record RoundView(
     int RoundNumber,
@@ -48,3 +49,13 @@ public sealed record PlayerView(
     int TricksWon,
     int HandCount,
     IReadOnlyList<CardView>? Hand);
+
+public sealed record RoundHistoryRowView(
+    int RoundNumber,
+    bool IsCompleted,
+    IReadOnlyList<RoundHistoryCellView> Cells);
+
+public sealed record RoundHistoryCellView(
+    string PlayerId,
+    int? Bid,
+    int? Score);

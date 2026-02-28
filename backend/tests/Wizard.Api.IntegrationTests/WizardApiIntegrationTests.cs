@@ -128,6 +128,106 @@ public sealed class WizardApiIntegrationTests : IClassFixture<WebApplicationFact
         Assert.True(second.Revision > first.Revision);
     }
 
+    [Fact]
+    public async Task StateUpdated_IncludesRoundHistoryForLiveAndCompletedRounds()
+    {
+        using var client = _factory.CreateClient();
+        var hostJoin = await CreateLobbyAsync(client, "Alice");
+        var bJoin = await JoinLobbyAsync(client, hostJoin.LobbyCode, "Bob");
+        var cJoin = await JoinLobbyAsync(client, hostJoin.LobbyCode, "Cara");
+
+        await using var hostHub = await ConnectHubAsync(hostJoin);
+        await using var bHub = await ConnectHubAsync(bJoin);
+        await using var cHub = await ConnectHubAsync(cJoin);
+
+        var hostUpdates = ListenForState(hostHub);
+        var bUpdates = ListenForState(bHub);
+        var cUpdates = ListenForState(cHub);
+        hostUpdates.Drain();
+        bUpdates.Drain();
+        cUpdates.Drain();
+
+        var hubsByPlayerId = new Dictionary<string, HubConnection>
+        {
+            [hostJoin.PlayerId] = hostHub,
+            [bJoin.PlayerId] = bHub,
+            [cJoin.PlayerId] = cHub
+        };
+
+        await hostHub.InvokeAsync("StartGame");
+
+        var hostEnvelope = await hostUpdates.ReadUntilAsync(x => x.State.Status is "Bidding" or "ChoosingTrump");
+        var bobEnvelope = await bUpdates.ReadUntilAsync(x => x.State.Status is "Bidding" or "ChoosingTrump");
+        var caraEnvelope = await cUpdates.ReadUntilAsync(x => x.State.Status is "Bidding" or "ChoosingTrump");
+
+        if (hostEnvelope.State.Round?.RequiresDealerTrumpSelection == true)
+        {
+            var dealerPlayerId = hostEnvelope.State.Players
+                .Single(x => x.SeatIndex == hostEnvelope.State.Round.DealerSeatIndex)
+                .PlayerId;
+            await hubsByPlayerId[dealerPlayerId].InvokeAsync("ChooseTrump", Suit.Spades);
+            hostEnvelope = await hostUpdates.ReadUntilAsync(x => x.State.Status == "Bidding");
+            bobEnvelope = await bUpdates.ReadUntilAsync(x => x.State.Status == "Bidding");
+            caraEnvelope = await cUpdates.ReadUntilAsync(x => x.State.Status == "Bidding");
+        }
+
+        var roundOneLive = hostEnvelope.State.RoundHistory.Single(x => x.RoundNumber == 1);
+        Assert.False(roundOneLive.IsCompleted);
+        Assert.All(roundOneLive.Cells, cell => Assert.Null(cell.Score));
+
+        var playersBySeat = hostEnvelope.State.Players.OrderBy(x => x.SeatIndex).ToArray();
+        var round = hostEnvelope.State.Round!;
+        var bidOrder = Enumerable
+            .Range(0, playersBySeat.Length)
+            .Select(index => playersBySeat[(round.StartingSeatIndex + index) % playersBySeat.Length])
+            .ToArray();
+
+        foreach (var player in bidOrder)
+        {
+            await hubsByPlayerId[player.PlayerId].InvokeAsync("SubmitBid", round.RoundNumber, 0);
+        }
+
+        hostEnvelope = await hostUpdates.ReadUntilAsync(x => x.State.Status == "Playing");
+        bobEnvelope = await bUpdates.ReadUntilAsync(x => x.State.Status == "Playing");
+        caraEnvelope = await cUpdates.ReadUntilAsync(x => x.State.Status == "Playing");
+
+        var envelopesByPlayerId = new Dictionary<string, StateUpdatedEnvelope>
+        {
+            [hostJoin.PlayerId] = hostEnvelope,
+            [bJoin.PlayerId] = bobEnvelope,
+            [cJoin.PlayerId] = caraEnvelope
+        };
+
+        var roundOneAfterBids = hostEnvelope.State.RoundHistory.Single(x => x.RoundNumber == 1);
+        Assert.All(roundOneAfterBids.Cells, cell => Assert.Equal(0, cell.Bid));
+        Assert.All(roundOneAfterBids.Cells, cell => Assert.Null(cell.Score));
+
+        for (var i = 0; i < playersBySeat.Length; i++)
+        {
+            var currentTurnPlayerId = hostEnvelope.State.CurrentTurnPlayerId!;
+            var activePlayerEnvelope = envelopesByPlayerId[currentTurnPlayerId];
+            var cardId = Assert.Single(activePlayerEnvelope.State.Players.Single(x => x.IsYou).Hand!).Id;
+
+            await hubsByPlayerId[currentTurnPlayerId].InvokeAsync("PlayCard", 1, 1, cardId);
+
+            hostEnvelope = await hostUpdates.ReadWithTimeoutAsync();
+            bobEnvelope = await bUpdates.ReadWithTimeoutAsync();
+            caraEnvelope = await cUpdates.ReadWithTimeoutAsync();
+
+            envelopesByPlayerId[hostJoin.PlayerId] = hostEnvelope;
+            envelopesByPlayerId[bJoin.PlayerId] = bobEnvelope;
+            envelopesByPlayerId[cJoin.PlayerId] = caraEnvelope;
+        }
+
+        var roundOneCompleted = hostEnvelope.State.RoundHistory.Single(x => x.RoundNumber == 1);
+        Assert.True(roundOneCompleted.IsCompleted);
+        Assert.All(roundOneCompleted.Cells, cell => Assert.NotNull(cell.Score));
+
+        var roundTwoLive = hostEnvelope.State.RoundHistory.Single(x => x.RoundNumber == 2);
+        Assert.False(roundTwoLive.IsCompleted);
+        Assert.All(roundTwoLive.Cells, cell => Assert.Null(cell.Score));
+    }
+
     private ChannelReader<StateUpdatedEnvelope> ListenForState(HubConnection connection)
     {
         var channel = Channel.CreateUnbounded<StateUpdatedEnvelope>();

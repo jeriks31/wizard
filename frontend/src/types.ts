@@ -38,6 +38,18 @@ export interface PlayerView {
   hand: CardView[] | null
 }
 
+export interface RoundHistoryCellView {
+  playerId: string
+  bid: number | null
+  score: number | null
+}
+
+export interface RoundHistoryRowView {
+  roundNumber: number
+  isCompleted: boolean
+  cells: RoundHistoryCellView[]
+}
+
 export interface RoundView {
   roundNumber: number
   dealerSeatIndex: number
@@ -63,6 +75,7 @@ export interface PlayerScopedState {
   canStartGame: boolean
   allowedBids: number[]
   winnerPlayerIds: string[]
+  roundHistory: RoundHistoryRowView[]
 }
 
 export interface StateUpdatedEnvelope {
