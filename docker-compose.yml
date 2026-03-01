@@ -13,7 +13,6 @@ services:
       dockerfile: Dockerfile
       args:
         VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:5000}
-        VITE_HUB_URL: ${VITE_HUB_URL:-http://localhost:5000/hubs/game}
     ports:
       - "3000:80"
     depends_on:

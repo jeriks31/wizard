@@ -6,9 +6,7 @@ RUN npm ci
 
 COPY . .
 ARG VITE_API_BASE_URL=http://localhost:5000
-ARG VITE_HUB_URL=http://localhost:5000/hubs/game
 ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
-ENV VITE_HUB_URL=${VITE_HUB_URL}
 RUN npm run build
 
 FROM nginx:1.29-alpine AS final

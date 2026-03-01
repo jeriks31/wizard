@@ -14,6 +14,7 @@ import {
   useState,
   type ReactNode,
 } from 'react'
+import { gameHubUrl } from './runtimeConfig'
 import type { SessionState, StateUpdatedEnvelope, Suit } from './types'
 
 const SESSION_KEY = 'wizard_session_v1'
@@ -32,8 +33,6 @@ interface WizardClientContextValue {
 }
 
 const WizardClientContext = createContext<WizardClientContextValue | null>(null)
-
-const hubUrl = import.meta.env.VITE_HUB_URL?.trim() || '/hubs/game'
 
 export function WizardClientProvider({ children }: { children: ReactNode }) {
   const [session, setSessionInternal] = useState<SessionState | null>(() => {
@@ -76,7 +75,7 @@ export function WizardClientProvider({ children }: { children: ReactNode }) {
     let disposed = false
 
     const connection = new HubConnectionBuilder()
-      .withUrl(hubUrl)
+      .withUrl(gameHubUrl)
       .configureLogging(LogLevel.Warning)
       .withAutomaticReconnect()
       .build()

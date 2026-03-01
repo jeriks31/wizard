@@ -1,9 +1,8 @@
 import type { JoinLobbyResponse } from './types'
-
-const apiBase = import.meta.env.VITE_API_BASE_URL?.trim() || ''
+import { apiBaseUrl } from './runtimeConfig'
 
 async function fetchJson<T>(url: string, init: RequestInit): Promise<T> {
-  const response = await fetch(`${apiBase}${url}`, {
+  const response = await fetch(`${apiBaseUrl}${url}`, {
     ...init,
     headers: {
       'Content-Type': 'application/json',
