@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { useWizardClient } from '../WizardClientContext'
 
 export function LobbyPage() {
@@ -73,7 +73,6 @@ export function LobbyPage() {
           >
             Start Game
           </button>
-          <Link to={`/game/${session.lobbyCode}`}>Open game table</Link>
         </div>
       </section>
     </main>
